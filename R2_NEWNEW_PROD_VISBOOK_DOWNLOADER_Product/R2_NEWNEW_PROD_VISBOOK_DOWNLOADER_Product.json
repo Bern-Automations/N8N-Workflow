@@ -1,0 +1,975 @@
+{
+  "name": "R2 NEWNEW PROD VISBOOK DOWNLOADER Product",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0056f87c-4e20-4cad-845f-d39815eb8494",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "username",
+              "value": "adgrabber.hooks"
+            },
+            {
+              "name": "password",
+              "value": "GyqcnxuGXBzG"
+            },
+            {
+              "name": "from_date",
+              "value": "2024-05-01T00:00:00.000Z"
+            },
+            {
+              "name": "to_date",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7eb3c8ac-117f-4dc5-a64b-4b947b4fdbca",
+      "name": "Credentials2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": "={{$node[\"Loop Over Items\"].context[\"noItemsLeft\"]? true: false}}"
+        }
+      },
+      "id": "58b35deb-b0ed-47d9-8368-2cb8373cae3f",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1360,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\ndelete $('Loop Over Items').item.json.attributes\n\n\nreturn $('Loop Over Items').item;"
+      },
+      "id": "6ff3eddf-1bb6-4dbd-8392-8538d7c971bd",
+      "name": "Code4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2aad7ea6-8e1d-4d07-89d9-169f4499a36e",
+      "name": "XML",
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        940,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "expression": "={{ $json['S:Envelope']['S:Body']['ns2:find_productsResponse'].return }}"
+      },
+      "id": "d7e7adbd-b530-446c-a08f-0f5a6dd31d07",
+      "name": "JSONPlus1",
+      "type": "n8n-nodes-rhgroup.json-plus",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\n\n\nreturn [{\"type\": \"accommodation\"},{\"type\": \"activity\"},{\"type\": \"service\"},{\"type\": \"merchandise\"}];"
+      },
+      "id": "9ba8c76f-3a0f-4ffe-9136-7d683c721c47",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b13bdb0c-bf3f-4cef-a909-9573e8b7a3ed",
+      "name": "Loop Over Items1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        300,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $('Loop Over Items').context[\"noItemsLeft\"] }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "bee3a2c6-b4f8-4b85-b1a9-3effefcfcf34",
+      "name": "IF2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nif(!Array.isArray($('Loop Over Items').item.json.attributes)){\n    $('Loop Over Items').item.json.attributes=[$('Loop Over Items').item.json.attributes]\n    \n  }\n\n\n  for (var i = 0 ; i< $('Loop Over Items').item.json.attributes.length ;i++){\n \n    $('Loop Over Items').item.json.attributes[i].products =[$('Search product').item.json.id]\n   $('Loop Over Items').item.json.attributes[i].group =$('Loop Over Items').item.json.attributes[i].group.name\n    $('Loop Over Items').item.json.attributes[i].attribute_id =$('Loop Over Items').item.json.attributes[i].id\n\n    delete $('Loop Over Items').item.json.attributes[i].id\n  }\n\nreturn $('Loop Over Items').item.json.attributes;"
+      },
+      "id": "4412ad8c-5db6-471e-84a1-9f4321217449",
+      "name": "Code7",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appRgyRLPKc5X3ScY",
+          "mode": "list",
+          "cachedResultName": "Visbook Prod Visbook Downloader (202405)",
+          "cachedResultUrl": "https://airtable.com/appRgyRLPKc5X3ScY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblmmiYayeVQp1NiK",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://airtable.com/appRgyRLPKc5X3ScY/tblmmiYayeVQp1NiK"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "person_id": "={{ $('Loop the Persons').item.json[\"id\"] }}",
+            "given_name": "={{ $('Loop the Persons').item.json.given_name }}",
+            "surname": "={{ $('Loop the Persons').item.json.surname }}",
+            "address": "={{ $('Loop the Persons').item.json.address}}",
+            "zip_code": "={{ $('Loop the Persons').item.json.zip_code}}",
+            "city": "={{ $('Loop the Persons').item.json.city}}",
+            "country_code": "={{ $('Loop the Persons').item.json.country_code}}",
+            "email": "={{ $('Loop the Persons').item.json.email}}",
+            "phone": "={{ $('Loop the Persons').item.json.phone}}",
+            "changed_date": "={{ $('Loop the Persons').item.json.changed_date}}",
+            "mobile": "={{ $('Loop the Persons').item.json.mobile}}",
+            "customer_id": "={{ $('Loop the Persons').item.json.customer_id }}"
+          },
+          "matchingColumns": [
+            "product_id",
+            "product_type",
+            "product_name"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "unit_id",
+              "displayName": "unit_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "product_type",
+              "displayName": "product_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "accommodation",
+                  "value": "accommodation"
+                },
+                {
+                  "name": "activity",
+                  "value": "activity"
+                },
+                {
+                  "name": "service",
+                  "value": "service"
+                },
+                {
+                  "name": "merchandise",
+                  "value": "merchandise"
+                },
+                {
+                  "name": "text",
+                  "value": "text"
+                },
+                {
+                  "name": "system",
+                  "value": "system"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company_id",
+              "displayName": "company_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "unit_name",
+              "displayName": "unit_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attributes\t",
+              "displayName": "attributes\t",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "distance",
+              "displayName": "distance",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "available",
+              "displayName": "available",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cleaned",
+              "displayName": "cleaned",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_min",
+              "displayName": "order_min",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_max",
+              "displayName": "order_max",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "role_id",
+              "displayName": "role_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "room_number",
+              "displayName": "room_number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "department_id",
+              "displayName": "department_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "external_reference",
+              "displayName": "external_reference",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true,
+          "updateAllMatches": false
+        }
+      },
+      "id": "3ed4c191-eea6-4819-9701-61140dc5f264",
+      "name": "Save product",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        680
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Qca7VcjloYWsRx3m",
+          "name": "Hooks integration.hooks@reformatizer.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appRgyRLPKc5X3ScY",
+          "mode": "list",
+          "cachedResultName": "Visbook Prod Visbook Downloader (202405)",
+          "cachedResultUrl": "https://airtable.com/appRgyRLPKc5X3ScY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblMgSnvFQRnkUGG3",
+          "mode": "list",
+          "cachedResultName": "Products Attributes",
+          "cachedResultUrl": "https://airtable.com/appRgyRLPKc5X3ScY/tblMgSnvFQRnkUGG3"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "person_id": "={{ $('Loop the Persons').item.json[\"id\"] }}",
+            "given_name": "={{ $('Loop the Persons').item.json.given_name }}",
+            "surname": "={{ $('Loop the Persons').item.json.surname }}",
+            "address": "={{ $('Loop the Persons').item.json.address}}",
+            "zip_code": "={{ $('Loop the Persons').item.json.zip_code}}",
+            "city": "={{ $('Loop the Persons').item.json.city}}",
+            "country_code": "={{ $('Loop the Persons').item.json.country_code}}",
+            "email": "={{ $('Loop the Persons').item.json.email}}",
+            "phone": "={{ $('Loop the Persons').item.json.phone}}",
+            "changed_date": "={{ $('Loop the Persons').item.json.changed_date}}",
+            "mobile": "={{ $('Loop the Persons').item.json.mobile}}",
+            "customer_id": "={{ $('Loop the Persons').item.json.customer_id }}"
+          },
+          "matchingColumns": [
+            "attribute_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "attribute_id",
+              "displayName": "attribute_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "group",
+              "displayName": "group",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "value",
+              "displayName": "value",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company_id",
+              "displayName": "company_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "unit_id",
+              "displayName": "unit_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "products",
+              "displayName": "products",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true,
+          "updateAllMatches": false
+        }
+      },
+      "id": "ad047524-1f1b-4fa3-870d-5d973e2a1dca",
+      "name": "Save product attribute",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        440
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Qca7VcjloYWsRx3m",
+          "name": "Hooks integration.hooks@reformatizer.com"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "9ff60524-9d97-438e-a258-9e4afb4896f6",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        2180,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appRgyRLPKc5X3ScY",
+          "mode": "list",
+          "cachedResultName": "Visbook Prod Visbook Downloader (202405)",
+          "cachedResultUrl": "https://airtable.com/appRgyRLPKc5X3ScY"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblmmiYayeVQp1NiK",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://airtable.com/appRgyRLPKc5X3ScY/tblmmiYayeVQp1NiK"
+        },
+        "filterByFormula": "=AND(AND({product_id} =  {{ $json.product_id }},product_type= '{{ $json.product_type }}'),product_name= '{{ $json.product_name }}')",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "id": "216de47e-d739-4a7f-9e0a-1071627cfac1",
+      "name": "Search product",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        580
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Qca7VcjloYWsRx3m",
+          "name": "Hooks integration.hooks@reformatizer.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://visdoc.visbook.com/VisBookWS-war/VisBookWebService",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/xml",
+        "body": "=<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <S:Body>\n    <ns2:find_products  xmlns:ns2=\"http://ws.visbook.com/\">\n      <user>\n        <username>{{ $('Credentials2').item.json[\"username\"] }}</username>\n        <password>{{ $('Credentials2').item.json[\"password\"] }}</password>\n        \n      </user>\n        <company_id>0</company_id>\n        <type>{{ $json[\"type\"] }}</type>\n    </ns2:find_products >\n  </S:Body>\n</S:Envelope>",
+        "options": {}
+      },
+      "id": "e1a4d497-2cb3-4e66-8713-5bdc11d35a5a",
+      "name": "HTTP Request Get list_products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        700,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{  $('Loop Over Items').item.json.attributes.length ? true:false\t }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "725405c7-95f8-4a5d-9caf-d10a4ade1893",
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2680,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "a97b6b53-4ad4-4f76-a5f0-7869cb1614bd",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        600
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Credentials2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Credentials2": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Save product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML": {
+      "main": [
+        [
+          {
+            "node": "JSONPlus1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSONPlus1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request Get list_products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save product": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Save product attribute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save product attribute": {
+      "main": [
+        [
+          {
+            "node": "IF2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Search product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search product": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Get list_products": {
+      "main": [
+        [
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Credentials2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f2ed9b0b-3e32-4ee3-949e-1dd4f903b92d",
+  "id": "NXsRQ75kyZnYoeLI",
+  "meta": {
+    "instanceId": "86072278c70ff09f1c01dd0d8440d12603051524ab675fc54c6bda20c78db9b6"
+  },
+  "tags": [
+    {
+      "createdAt": "2024-04-23T07:48:55.361Z",
+      "updatedAt": "2024-04-23T07:48:55.361Z",
+      "id": "1YtWjK2zuPJ5yjW6",
+      "name": "Hooks"
+    }
+  ]
+}

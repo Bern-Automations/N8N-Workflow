@@ -1,0 +1,1836 @@
+{
+  "name": "DEV  VISBOOK DOWNLOADER ORDERS",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "27f26d8e-1100-4657-b42d-6d07d50490d8",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        280,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "username",
+              "value": "adgrabber.webservicetest"
+            },
+            {
+              "name": "password",
+              "value": "9EuWt4AJaFQe"
+            },
+            {
+              "name": "from_date",
+              "value": "2024-05-01T00:00:00.000Z"
+            },
+            {
+              "name": "to_date",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b1355d75-13c0-40fc-aedc-4c513bb4d391",
+      "name": "Credentials2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        460,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6d31a0ef-5502-4990-b51c-d9d11c4c525e",
+      "name": "XML",
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        940,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nlet data=[]\nfor (const item of $json['S:Envelope']['S:Body']['ns2:find_ordernumbersResponse'].return) {\n  data.push({\"order_id\":item});\n}\n\nreturn data;"
+      },
+      "id": "a4f69800-6292-40a8-a798-ebed4f2c0bad",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "25b2fbc3-499a-4a50-91ff-68902ea89849",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1400,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://visdoc.visbook.com/VisBookWS-war/VisBookWebService",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/xml",
+        "body": "=<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <S:Body>\n    <ns2:find_ordernumbers  xmlns:ns2=\"http://ws.visbook.com/\">\n      <user>\n        <username>{{ $('Credentials2').item.json[\"username\"] }}</username>\n        <password>{{ $('Credentials2').item.json[\"password\"] }}</password>\n        \n      </user>\n        <company_id>0</company_id>\n        <from_registration_date>{{ $json[\"from_date\"] }}</from_registration_date>\n        <to_registration_date>{{ $json[\"to_date\"] }}</to_registration_date>\n    </ns2:find_ordernumbers >\n  </S:Body>\n</S:Envelope>",
+        "options": {}
+      },
+      "id": "27a5a891-30f3-4792-ac96-716ab6e5206d",
+      "name": "HTTP Request Get ordernumbers ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        700,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://visdoc.visbook.com/VisBookWS-war/VisBookWebService",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/xml",
+        "body": "=<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <S:Body>\n    <ns2:find_orders  xmlns:ns2=\"http://ws.visbook.com/\">\n      <user>\n        <username>{{ $('Credentials2').item.json[\"username\"] }}</username>\n        <password>{{ $('Credentials2').item.json[\"password\"] }}</password>\n      </user>\n        <order_id>{{ $json[\"order_id\"] }}</order_id>\n    </ns2:find_orders >\n  </S:Body>\n</S:Envelope>",
+        "options": {}
+      },
+      "id": "b8bec66c-0d52-4da1-ab9a-284f75528191",
+      "name": "HTTP Request Get order",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1620,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "expression": "={{ $json['S:Envelope']['S:Body']['ns2:find_ordersResponse'].return }}"
+      },
+      "id": "cdf75005-50ad-46e6-a219-975b5c5b4397",
+      "name": "JSONPlus",
+      "type": "n8n-nodes-rhgroup.json-plus",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "741a66cf-800c-42a2-90c1-b04ea863ca9e",
+      "name": "XML1",
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        1860,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n$('JSONPlus').item.json.customer = [$('Search customer1').item.json.id]\n\ndelete $('JSONPlus').item.json.bookings\ndelete $('JSONPlus').item.json.payments\ndelete $('JSONPlus').item.json.external_booking_references\ndelete $('JSONPlus').item.json.arrival_customer\n\n\nreturn $('JSONPlus').item;"
+      },
+      "id": "3c9fc8f1-a624-4acb-a8e2-593c83429f8b",
+      "name": "Code4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app3nKKtw12ZOoo66",
+          "mode": "list",
+          "cachedResultName": "Visbook Dev",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl8t1TrmvwhkGza2",
+          "mode": "list",
+          "cachedResultName": "Customers",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66/tbl8t1TrmvwhkGza2"
+        },
+        "filterByFormula": "={customer_id} =  \"{{ $json.customer.customer_id }}\"",
+        "options": {}
+      },
+      "id": "ff23c82a-1f18-4125-b1a4-b52bf497c62b",
+      "name": "Search customer1",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        2360,
+        500
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "mdY3Amt6BHWG2uCQ",
+          "name": "rhgroup.devb token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app3nKKtw12ZOoo66",
+          "mode": "list",
+          "cachedResultName": "Visbook Dev",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbloBN5zLfSeLDPdW",
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66/tbloBN5zLfSeLDPdW"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "person_id": "={{ $('Loop the Persons').item.json[\"id\"] }}",
+            "given_name": "={{ $('Loop the Persons').item.json.given_name }}",
+            "surname": "={{ $('Loop the Persons').item.json.surname }}",
+            "address": "={{ $('Loop the Persons').item.json.address}}",
+            "zip_code": "={{ $('Loop the Persons').item.json.zip_code}}",
+            "city": "={{ $('Loop the Persons').item.json.city}}",
+            "country_code": "={{ $('Loop the Persons').item.json.country_code}}",
+            "email": "={{ $('Loop the Persons').item.json.email}}",
+            "phone": "={{ $('Loop the Persons').item.json.phone}}",
+            "changed_date": "={{ $('Loop the Persons').item.json.changed_date}}",
+            "mobile": "={{ $('Loop the Persons').item.json.mobile}}",
+            "customer_id": "={{ $('Loop the Persons').item.json.customer_id }}"
+          },
+          "matchingColumns": [
+            "order_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company_id",
+              "displayName": "company_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "invoice_id",
+              "displayName": "invoice_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "multi_order_id",
+              "displayName": "multi_order_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "invoice_date",
+              "displayName": "invoice_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payed_date",
+              "displayName": "payed_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cancel_date",
+              "displayName": "cancel_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "changed_date",
+              "displayName": "changed_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "registration_date",
+              "displayName": "registration_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer",
+              "displayName": "customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "arrival_customer",
+              "displayName": "arrival_customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "other_customer",
+              "displayName": "other_customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "bookings",
+              "displayName": "bookings",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_status",
+              "displayName": "order_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "offer",
+                  "value": "offer"
+                },
+                {
+                  "name": "order",
+                  "value": "order"
+                },
+                {
+                  "name": "invoiced",
+                  "value": "invoiced"
+                },
+                {
+                  "name": "payed",
+                  "value": "payed"
+                },
+                {
+                  "name": "cancelled",
+                  "value": "cancelled"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_sum",
+              "displayName": "order_sum",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_balance",
+              "displayName": "order_balance",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payments",
+              "displayName": "payments",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "kid",
+              "displayName": "kid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related_order",
+              "displayName": "related_order",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "sys_status",
+              "displayName": "sys_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "None",
+                  "value": "None"
+                },
+                {
+                  "name": "CreditNote",
+                  "value": "CreditNote"
+                },
+                {
+                  "name": "PartialInvoice",
+                  "value": "PartialInvoice"
+                },
+                {
+                  "name": "Credited",
+                  "value": "Credited"
+                },
+                {
+                  "name": "CopiedFromCreditedInvoice",
+                  "value": "CopiedFromCreditedInvoice"
+                },
+                {
+                  "name": "PartialInvoiceAlternative",
+                  "value": "PartialInvoiceAlternative"
+                },
+                {
+                  "name": "NoShowRelation",
+                  "value": "NoShowRelation"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "external_booking_references",
+              "displayName": "external_booking_references",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "owner_id",
+              "displayName": "owner_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "changed_id",
+              "displayName": "changed_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "custom_reference",
+              "displayName": "custom_reference",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "checkout_payment_rule",
+              "displayName": "checkout_payment_rule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "checkout_payment_rule_note",
+              "displayName": "checkout_payment_rule_note",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "internal_note",
+              "displayName": "internal_note",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true,
+          "updateAllMatches": false
+        }
+      },
+      "id": "73b030ea-52dd-4447-a282-997a3139b199",
+      "name": "Save order",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        500
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "mdY3Amt6BHWG2uCQ",
+          "name": "rhgroup.devb token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\n// for (const item of $('JSONPlus').item.json.bookings){\n//   item.json.order_id_airtable =$('Search customer1').item.json.id\n// }\nif(!Array.isArray($('JSONPlus').item.json.bookings)){\n  $('JSONPlus').item.json.bookings=[$('JSONPlus').item.json.bookings]\n  \n}\n\n\n  for (var i = 0 ; i< $('JSONPlus').item.json.bookings.length ;i++){\n \n    $('JSONPlus').item.json.bookings[i].customer =[$('Search customer1').item.json.id]\n    $('JSONPlus').item.json.bookings[i].order =[$('Save order').item.json.id]\n    $('JSONPlus').item.json.bookings[i].price =$('JSONPlus').item.json.bookings[i].price.price_value\n    \n  delete $('JSONPlus').item.json.bookings[i].vat_list  \n  delete $('JSONPlus').item.json.bookings[i].person\n  delete $('JSONPlus').item.json.bookings[i].person_list\n  delete $('JSONPlus').item.json.bookings[i].external_booking_references\n  delete $('JSONPlus').item.json.bookings[i].arrival_customer\n  delete $('JSONPlus').item.json.bookings[i].other_customer\n  delete $('JSONPlus').item.json.bookings[i].related\n  delete $('JSONPlus').item.json.bookings[i].attributes\n  }\n\nreturn $('JSONPlus').item.json.bookings;"
+      },
+      "id": "c3049654-da2a-45c8-a354-eaf03eedd7f3",
+      "name": "Code5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3500,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $('JSONPlus').item.json.bookings? true: false }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "909c6016-e408-4dfc-b699-96626b1cc119",
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app3nKKtw12ZOoo66",
+          "mode": "list",
+          "cachedResultName": "Visbook Dev",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblM8Phi3h2jpSalF",
+          "mode": "list",
+          "cachedResultName": "Bookings",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66/tblM8Phi3h2jpSalF"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "person_id": "={{ $('Loop the Persons').item.json[\"id\"] }}",
+            "given_name": "={{ $('Loop the Persons').item.json.given_name }}",
+            "surname": "={{ $('Loop the Persons').item.json.surname }}",
+            "address": "={{ $('Loop the Persons').item.json.address}}",
+            "zip_code": "={{ $('Loop the Persons').item.json.zip_code}}",
+            "city": "={{ $('Loop the Persons').item.json.city}}",
+            "country_code": "={{ $('Loop the Persons').item.json.country_code}}",
+            "email": "={{ $('Loop the Persons').item.json.email}}",
+            "phone": "={{ $('Loop the Persons').item.json.phone}}",
+            "changed_date": "={{ $('Loop the Persons').item.json.changed_date}}",
+            "mobile": "={{ $('Loop the Persons').item.json.mobile}}",
+            "customer_id": "={{ $('Loop the Persons').item.json.customer_id }}"
+          },
+          "matchingColumns": [
+            "booking_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "booking_id",
+              "displayName": "booking_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "offer",
+                  "value": "offer"
+                },
+                {
+                  "name": "order",
+                  "value": "order"
+                },
+                {
+                  "name": "invoiced",
+                  "value": "invoiced"
+                },
+                {
+                  "name": "payed",
+                  "value": "payed"
+                },
+                {
+                  "name": "cancelled",
+                  "value": "cancelled"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "guest_status",
+              "displayName": "guest_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "not_arrived",
+                  "value": "not_arrived"
+                },
+                {
+                  "name": "arrived",
+                  "value": "arrived"
+                },
+                {
+                  "name": "departured",
+                  "value": "departured"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer",
+              "displayName": "customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "arrival_customer_id",
+              "displayName": "arrival_customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "arrival_customer",
+              "displayName": "arrival_customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "other_customer_id",
+              "displayName": "other_customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "other_customer",
+              "displayName": "other_customer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "keycard_id",
+              "displayName": "keycard_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order",
+              "displayName": "order",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "master_booking_id",
+              "displayName": "master_booking_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vat_list",
+              "displayName": "vat_list",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "owner_id",
+              "displayName": "owner_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "changed_id",
+              "displayName": "changed_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "checkout_payment_rule",
+              "displayName": "checkout_payment_rule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "checkout_payment_rule_note",
+              "displayName": "checkout_payment_rule_note",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "registration_date",
+              "displayName": "registration_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "price",
+              "displayName": "price",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "from_date",
+              "displayName": "from_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "to_date",
+              "displayName": "to_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "units",
+              "displayName": "units",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "persons",
+              "displayName": "persons",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "persons_rebate1",
+              "displayName": "persons_rebate1",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "persons_rebate2",
+              "displayName": "persons_rebate2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reservation_id",
+              "displayName": "reservation_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "person_name",
+              "displayName": "person_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "person",
+              "displayName": "person",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "person_list",
+              "displayName": "person_list",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "related",
+              "displayName": "related",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "external_booking_references",
+              "displayName": "external_booking_references",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "gender",
+              "displayName": "gender",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "guest_type",
+              "displayName": "guest_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ages",
+              "displayName": "ages",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "event_id",
+              "displayName": "event_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "camping_type",
+              "displayName": "camping_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "unit_id",
+              "displayName": "unit_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "product_type",
+              "displayName": "product_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company_id",
+              "displayName": "company_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attributes",
+              "displayName": "attributes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "unit_name",
+              "displayName": "unit_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "distance",
+              "displayName": "distance",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "available",
+              "displayName": "available",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cleaned",
+              "displayName": "cleaned",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_min",
+              "displayName": "order_min",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_max",
+              "displayName": "order_max",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "role_id",
+              "displayName": "role_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "room_number\t",
+              "displayName": "room_number\t",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "department_id",
+              "displayName": "department_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "external_reference",
+              "displayName": "external_reference",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true,
+          "updateAllMatches": false
+        }
+      },
+      "id": "9190097b-aed6-4049-b5ce-d25123345389",
+      "name": "Save bookings",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        160
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "mdY3Amt6BHWG2uCQ",
+          "name": "rhgroup.devb token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $('JSONPlus').item.json.payments? true: false }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "60c8637f-245a-4d89-829f-839321f27a05",
+      "name": "IF1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3940,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nif(!Array.isArray($('JSONPlus').item.json.payments)){\n\n  $('JSONPlus').item.json.payments.order =[$('Save order').item.json.id]\n  $('JSONPlus').item.json.payments.method = $('JSONPlus').item.json.payments.method.name\n  $('JSONPlus').item.json.payments=[$('JSONPlus').item.json.payments]\n  \n}else{\n  for (var i = 0 ; i< $('JSONPlus').item.json.payments.length ;i++){\n    $('JSONPlus').item.json.payments[i].order =[$('Save order').item.json.id]\n    $('JSONPlus').item.json.payments[i].method = $('JSONPlus').item.json.payments[i].method.name\n  }\n}\nreturn $('JSONPlus').item.json.payments;"
+      },
+      "id": "49bcda3d-f2d9-440c-bd16-780ddca2206a",
+      "name": "Code6",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4220,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app3nKKtw12ZOoo66",
+          "mode": "list",
+          "cachedResultName": "Visbook Dev",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbleVPXol1sMekXZO",
+          "mode": "list",
+          "cachedResultName": "Payments",
+          "cachedResultUrl": "https://airtable.com/app3nKKtw12ZOoo66/tbleVPXol1sMekXZO"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "person_id": "={{ $('Loop the Persons').item.json[\"id\"] }}",
+            "given_name": "={{ $('Loop the Persons').item.json.given_name }}",
+            "surname": "={{ $('Loop the Persons').item.json.surname }}",
+            "address": "={{ $('Loop the Persons').item.json.address}}",
+            "zip_code": "={{ $('Loop the Persons').item.json.zip_code}}",
+            "city": "={{ $('Loop the Persons').item.json.city}}",
+            "country_code": "={{ $('Loop the Persons').item.json.country_code}}",
+            "email": "={{ $('Loop the Persons').item.json.email}}",
+            "phone": "={{ $('Loop the Persons').item.json.phone}}",
+            "changed_date": "={{ $('Loop the Persons').item.json.changed_date}}",
+            "mobile": "={{ $('Loop the Persons').item.json.mobile}}",
+            "customer_id": "={{ $('Loop the Persons').item.json.customer_id }}"
+          },
+          "matchingColumns": [
+            "registration_date",
+            "method",
+            "amount"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "method",
+              "displayName": "method",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ref",
+              "displayName": "ref",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ccardid",
+              "displayName": "ccardid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "registration_date",
+              "displayName": "registration_date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "master_booking_id",
+              "displayName": "master_booking_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order",
+              "displayName": "order",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "typecast": true,
+          "updateAllMatches": false
+        }
+      },
+      "id": "73828981-f359-4137-9680-0d6426ac6cba",
+      "name": "Save payment",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        4420,
+        500
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "mdY3Amt6BHWG2uCQ",
+          "name": "rhgroup.devb token account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Credentials2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Credentials2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Get ordernumbers ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Get ordernumbers ": {
+      "main": [
+        [
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request Get order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML1": {
+      "main": [
+        [
+          {
+            "node": "JSONPlus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Get order": {
+      "main": [
+        [
+          {
+            "node": "XML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSONPlus": {
+      "main": [
+        [
+          {
+            "node": "Search customer1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search customer1": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Save order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save order": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Save bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save bookings": {
+      "main": [
+        [
+          {
+            "node": "IF1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF1": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "Save payment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save payment": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "df94981d-9c77-45de-8507-49c9658fe78e",
+  "id": "aBdUN1b1DqD73Ofj",
+  "meta": {
+    "instanceId": "86072278c70ff09f1c01dd0d8440d12603051524ab675fc54c6bda20c78db9b6"
+  },
+  "tags": []
+}

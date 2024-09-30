@@ -1,0 +1,4699 @@
+{
+  "name": "AUTOMATIONtriggered - airtable automation script trigger search slack for thread - get all tagged",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "3772a520-2cf5-4f53-92ce-d211b4468d5c",
+        "options": {}
+      },
+      "id": "50348161-ccd3-4edc-897e-faedeb5e9fa0",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        360
+      ],
+      "webhookId": "3772a520-2cf5-4f53-92ce-d211b4468d5c"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appLEhSvk48VvE4n7",
+          "mode": "list",
+          "cachedResultName": "Internal Project Plan",
+          "cachedResultUrl": "https://airtable.com/appLEhSvk48VvE4n7"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl6eC4gPGXW9C988",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://airtable.com/appLEhSvk48VvE4n7/tbl6eC4gPGXW9C988"
+        },
+        "filterByFormula": "{Get Last Message From Thread} = 'Yes'",
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "Slack thread last checked"
+            }
+          ]
+        }
+      },
+      "id": "6a08000b-52bf-496e-90aa-3055c50f1404",
+      "name": "Get Task Details",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        180,
+        360
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "uuOmy3y8vhS5tfLp",
+          "name": "RHgroup devb Personal Access Token account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "search",
+        "query": "={{ $json['TASK ID'] }} in:#{{ $json['Internal_Which Slack Channel'] }}",
+        "sort": "asc",
+        "limit": 1,
+        "options": {}
+      },
+      "id": "bfabd7e9-7693-48e3-9c37-4fed55261837",
+      "name": "Get Channel Message",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        760,
+        380
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "r2RBZ1ZiDmaDr3Fk",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://slack.com/api/conversations.replies",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "channel",
+              "value": "={{ $json.channel.id }}"
+            },
+            {
+              "name": "ts",
+              "value": "={{ $json.ts }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "af7cdada-617f-4647-8971-db8ba3413b0d",
+      "name": "Get List of Replies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1240,
+        340
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "r2RBZ1ZiDmaDr3Fk",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst data = $('Get List of Replies').first().json.messages.sort( function compare( a, b ) {\n  if ( a.ts < b.ts ){\n    return 1;\n  }\n  if ( a.ts > b.ts ){\n    return -1;\n  }\n  return 0;\n} ).slice(0, 4) \n\nlet replies = '';\n\n\n\nfor (const item of data) {\nlet user_name=\"bot\"\n  for (const user of $('Get Users').all()) {\n   if(user.json.id === item.user){\n     user_name = user.json.real_name\n     break;\n   }\n  }\n  replies += DateTime.fromSeconds(parseFloat(item.ts)).toFormat('yyyyMMdd hh:mm') + \"\\n\" + user_name+ \": \" + item.text + \"\\n\" + \"\\n\" \n}\n\nreturn [{\"replies\": replies,\"id\": $('Loop Over Items').item.json.id }];"
+      },
+      "id": "a69475cd-c460-45f9-aa60-c8f9f4a38e30",
+      "name": "Replies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appLEhSvk48VvE4n7",
+          "mode": "list",
+          "cachedResultName": "Internal Project Plan",
+          "cachedResultUrl": "https://airtable.com/appLEhSvk48VvE4n7"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl6eC4gPGXW9C988",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://airtable.com/appLEhSvk48VvE4n7/tbl6eC4gPGXW9C988"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Slack thread last checked": "={{  $now }}",
+            "Last Slack Message in internal Thread": "={{ $json.replies }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task Name",
+              "displayName": "Task Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reviewer",
+              "displayName": "Reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Attachment",
+              "displayName": "Attachment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Sync Task Info",
+              "displayName": "Sync Task Info",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task-number",
+              "displayName": "Task-number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "My Task Desktop Link",
+              "displayName": "My Task Desktop Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ADG Sync Ticket Number",
+              "displayName": "ADG Sync Ticket Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Autonumber",
+              "displayName": "Autonumber",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Parent Task",
+              "displayName": "Parent Task",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Start Date",
+              "displayName": "Start Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "LEGACY Est Hours Needed",
+              "displayName": "LEGACY Est Hours Needed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "End Date",
+              "displayName": "End Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "User",
+              "displayName": "User",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Is this a Interna Economy Project Task",
+              "displayName": "Is this a Interna Economy Project Task",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project Google Drive Folder",
+              "displayName": "Project Google Drive Folder",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Drive Folder Name",
+              "displayName": "Drive Folder Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Drive",
+              "displayName": "Drive",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Actual Hours Legacy",
+              "displayName": "Actual Hours Legacy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Assignee",
+              "displayName": "Assignee",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Blocked",
+                  "value": "Blocked"
+                },
+                {
+                  "name": "Backlog",
+                  "value": "Backlog"
+                },
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Requestor Review",
+                  "value": "Requestor Review"
+                },
+                {
+                  "name": "For Review",
+                  "value": "For Review"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                },
+                {
+                  "name": "Archive (not done)",
+                  "value": "Archive (not done)"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Assignee (from User)",
+              "displayName": "Assignee (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Assignee (from PM)",
+              "displayName": "Assignee (from PM)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project",
+              "displayName": "Project",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Task ID",
+              "displayName": "Hubstaff Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff User ID (from User)",
+              "displayName": "Hubstaff User ID (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Task Created Date",
+              "displayName": "Hubstaff Task Created Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Time Log",
+              "displayName": "Time Log",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Company (from Project)",
+              "displayName": "Company (from Project)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Est vs Actual Hours",
+              "displayName": "Est vs Actual Hours",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created By",
+              "displayName": "Created By",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "internal slack thread",
+              "displayName": "internal slack thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Predecessor",
+              "displayName": "Predecessor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Dev Sync Adgrabber Sync Tasks",
+              "displayName": "Dev Sync Adgrabber Sync Tasks",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Adg Description",
+              "displayName": "Adg Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ADG_attachment",
+              "displayName": "ADG_attachment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Solution or Answer from the Assigned User - used for review status",
+              "displayName": "Solution or Answer from the Assigned User - used for review status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Adg Task ID (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Adg Task ID (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task/Invoicing Status_Internal",
+              "displayName": "Task/Invoicing Status_Internal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Awaiting Client Approval ",
+                  "value": "Awaiting Client Approval "
+                },
+                {
+                  "name": "Client Approved - To start work on",
+                  "value": "Client Approved - To start work on"
+                },
+                {
+                  "name": "Client Approved - Work In Progress",
+                  "value": "Client Approved - Work In Progress"
+                },
+                {
+                  "name": "Client Approved - Work Done - Ready to be invoiced",
+                  "value": "Client Approved - Work Done - Ready to be invoiced"
+                },
+                {
+                  "name": "Client Approved - Work Done  - But wait with invoice",
+                  "value": "Client Approved - Work Done  - But wait with invoice"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Not paid",
+                  "value": "Client Approved - Work Done - Invoiced - Not paid"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Paid",
+                  "value": "Client Approved - Work Done - Invoiced - Paid"
+                },
+                {
+                  "name": "archive (not going to invoice)",
+                  "value": "archive (not going to invoice)"
+                },
+                {
+                  "name": "Work Done For Free",
+                  "value": "Work Done For Free"
+                },
+                {
+                  "name": "Client Approved - Work for QA",
+                  "value": "Client Approved - Work for QA"
+                },
+                {
+                  "name": "Client Approved - Ready for QA",
+                  "value": "Client Approved - Ready for QA"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Status (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Estimated Hours (or so far)",
+              "displayName": "Estimated Hours (or so far)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Scheduler Ticket Link (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Scheduler Ticket Link (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Week",
+              "displayName": "Week",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Paid/Unpaid",
+              "displayName": "Paid/Unpaid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Other  details to add in invoicing",
+              "displayName": "Other  details to add in invoicing",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Invoice URL (from Invoice) (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Invoice URL (from Invoice) (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoices New Synced From Budget",
+              "displayName": "Invoices New Synced From Budget",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "invoice pdf (from Invoices)",
+              "displayName": "invoice pdf (from Invoices)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoice_formatted",
+              "displayName": "Invoice_formatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Issue Date (from Invoices)",
+              "displayName": "Issue Date (from Invoices)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoicing Status (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Invoicing Status (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hours Invoiced",
+              "displayName": "Hours Invoiced",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "INVOICE STATUS",
+              "displayName": "INVOICE STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "part 2",
+              "displayName": "part 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "We Should Invoice?",
+              "displayName": "We Should Invoice?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Invoice category/section",
+              "displayName": "Invoice category/section",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "A. Small bugs that were fixed (not a functionality)",
+                  "value": "A. Small bugs that were fixed (not a functionality)"
+                },
+                {
+                  "name": "B. Tasks approved and robin sent by Robin",
+                  "value": "B. Tasks approved and robin sent by Robin"
+                },
+                {
+                  "name": "C.. Tasks we didnt get approval on but we did",
+                  "value": "C.. Tasks we didnt get approval on but we did"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Why should we invoice it? ",
+              "displayName": "Why should we invoice it? ",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ADG slack thread link (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "ADG slack thread link (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ADG Slack Thread",
+              "displayName": "ADG Slack Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task name (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Task name (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Meeting 23 November Comment",
+              "displayName": "Meeting 23 November Comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Suggest Invoice",
+              "displayName": "Suggest Invoice",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Internal_Which Slack Channel",
+              "displayName": "Internal_Which Slack Channel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "rfm-request",
+                  "value": "rfm-request"
+                },
+                {
+                  "name": "adg-portal-internal",
+                  "value": "adg-portal-internal"
+                },
+                {
+                  "name": "rfm-Internal-delivery",
+                  "value": "rfm-Internal-delivery"
+                },
+                {
+                  "name": "design",
+                  "value": "design"
+                },
+                {
+                  "name": "ext-lan",
+                  "value": "ext-lan"
+                },
+                {
+                  "name": "onboarding-jelmar",
+                  "value": "onboarding-jelmar"
+                },
+                {
+                  "name": "homestyle-devb",
+                  "value": "homestyle-devb"
+                },
+                {
+                  "name": "buxfergeneralecon",
+                  "value": "buxfergeneralecon"
+                },
+                {
+                  "name": "merid",
+                  "value": "merid"
+                },
+                {
+                  "name": "SEO",
+                  "value": "SEO"
+                },
+                {
+                  "name": "appointment leads",
+                  "value": "appointment leads"
+                },
+                {
+                  "name": "digitialization",
+                  "value": "digitialization"
+                },
+                {
+                  "name": "topvirtual",
+                  "value": "topvirtual"
+                },
+                {
+                  "name": "integrationsoffert",
+                  "value": "integrationsoffert"
+                },
+                {
+                  "name": "Martin - DM",
+                  "value": "Martin - DM"
+                },
+                {
+                  "name": "leadsplan-salesfunctionality",
+                  "value": "leadsplan-salesfunctionality"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "NOW",
+              "displayName": "NOW",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Internal Slack thread sent date and time",
+              "displayName": "Internal Slack thread sent date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Proj",
+              "displayName": "Proj",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task (from Reformatizer Task List External)",
+              "displayName": "Task (from Reformatizer Task List External)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Reformatizer Task List Internal",
+              "displayName": "Reformatizer Task List Internal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "RFM Internal details (from Reformatizer Task List Internal)",
+              "displayName": "RFM Internal details (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Link to other source base",
+              "displayName": "Link to other source base",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Trigger_Update User",
+              "displayName": "Trigger_Update User",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Update",
+                  "value": "Update"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "User_Scheduler",
+              "displayName": "User_Scheduler",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Users_Internal",
+              "displayName": "Users_Internal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "External Slack thread sent date and time",
+              "displayName": "External Slack thread sent date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "RFM ID",
+              "displayName": "RFM ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "TASK ID",
+              "displayName": "TASK ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status (from Reformatizer Task List Internal)",
+              "displayName": "Status (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status from the source base",
+              "displayName": "Status from the source base",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status remarks",
+              "displayName": "Status remarks",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interface (from Project) (from Reformatizer Task List Internal)",
+              "displayName": "Interface (from Project) (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interfaces",
+              "displayName": "Interfaces",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "External_Customerfacing_Which Slack Channel",
+              "displayName": "External_Customerfacing_Which Slack Channel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Users tagged from other base",
+              "displayName": "Users tagged from other base",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task Text",
+              "displayName": "Task Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "RFMINT_attachment",
+              "displayName": "RFMINT_attachment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Mark Comments",
+              "displayName": "Mark Comments",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Task details - Marks Interface",
+              "displayName": "Task details - Marks Interface",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "trigger",
+              "displayName": "trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sync back",
+                  "value": "Sync back"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Start Date How Long Ago Weeks",
+              "displayName": "Start Date How Long Ago Weeks",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hours Budgetted / Est Hours Needed",
+              "displayName": "Hours Budgetted / Est Hours Needed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Durations Days",
+              "displayName": "Durations Days",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Project ID",
+              "displayName": "Hubstaff Project ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "RecordID",
+              "displayName": "RecordID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project's recordID",
+              "displayName": "Project's recordID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Lan's comment",
+              "displayName": "Lan's comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reviewer_assignee",
+              "displayName": "Reviewer_assignee",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified 2",
+              "displayName": "Last Modified 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Get Slack Link",
+              "displayName": "Get Slack Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "My Role",
+              "displayName": "My Role",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Count (Tasks) (from Reformatizer Task List Internal)",
+              "displayName": "Count (Tasks) (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Slack Member ID (from User)",
+              "displayName": "Slack Member ID (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoicing Status",
+              "displayName": "Invoicing Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Awaiting Client Approval ",
+                  "value": "Awaiting Client Approval "
+                },
+                {
+                  "name": "Work Done For Free",
+                  "value": "Work Done For Free"
+                },
+                {
+                  "name": "Client Approved - To start work on",
+                  "value": "Client Approved - To start work on"
+                },
+                {
+                  "name": "Client Approved - Work In Progress",
+                  "value": "Client Approved - Work In Progress"
+                },
+                {
+                  "name": "Client Approved - Work Done - Ready to be invoiced",
+                  "value": "Client Approved - Work Done - Ready to be invoiced"
+                },
+                {
+                  "name": "Client Approved - Ready for QA",
+                  "value": "Client Approved - Ready for QA"
+                },
+                {
+                  "name": "Client Approved - Work Done  - But wait with invoice",
+                  "value": "Client Approved - Work Done  - But wait with invoice"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Not paid",
+                  "value": "Client Approved - Work Done - Invoiced - Not paid"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Paid",
+                  "value": "Client Approved - Work Done - Invoiced - Paid"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Type (from Project)",
+              "displayName": "Type (from Project)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "slack thread message ID",
+              "displayName": "slack thread message ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "slack channel ID",
+              "displayName": "slack channel ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "slack channel ID_formatted",
+              "displayName": "slack channel ID_formatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "slack thread message ID_formatted",
+              "displayName": "slack thread message ID_formatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Internal Slack Channel Link (For Project)",
+              "displayName": "Internal Slack Channel Link (For Project)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "REVIEWER Member ID",
+              "displayName": "REVIEWER Member ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Economy Team Task Link",
+              "displayName": "Economy Team Task Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Working Hours (from User)",
+              "displayName": "Working Hours (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Working Hours Week",
+              "displayName": "Working Hours Week",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Aaron's detail's view",
+              "displayName": "Aaron's detail's view",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "task text with ID & proj name",
+              "displayName": "task text with ID & proj name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status based on dates",
+              "displayName": "Status based on dates",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ED DIFF FROM TODAY",
+              "displayName": "ED DIFF FROM TODAY",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "SD DIFF FROM TODAY",
+              "displayName": "SD DIFF FROM TODAY",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Email of Who has access to the project Type",
+              "displayName": "Email of Who has access to the project Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status based on dates lev1",
+              "displayName": "Status based on dates lev1",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "INT ID",
+              "displayName": "INT ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "INT AUTOID",
+              "displayName": "INT AUTOID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status last modified date and time",
+              "displayName": "Status last modified date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last status integromat sent",
+              "displayName": "Last status integromat sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Team",
+              "displayName": "Team",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Full Ticket Details",
+              "displayName": "Full Ticket Details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "User/Reviewer",
+              "displayName": "User/Reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "My Task Mobile Link",
+              "displayName": "My Task Mobile Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "reviewer assigned",
+              "displayName": "reviewer assigned",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Day Schedule",
+              "displayName": "Day Schedule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Order Day Schedule",
+              "displayName": "Order Day Schedule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Day Schedule Comment",
+              "displayName": "Day Schedule Comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Order Day Schedule Name Comment",
+              "displayName": "Order Day Schedule Name Comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Day Task Planner",
+              "displayName": "Day Task Planner",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Done / Test Notes - used for Done status",
+              "displayName": "Done / Test Notes - used for Done status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status modified date and time",
+              "displayName": "Status modified date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Get Last Message From Thread",
+              "displayName": "Get Last Message From Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Slack Message in internal Thread",
+              "displayName": "Last Slack Message in internal Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Get Last Messages Number",
+              "displayName": "Get Last Messages Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Day Schedule Date",
+              "displayName": "Day Schedule Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Channel ID For Slack Thread",
+              "displayName": "Channel ID For Slack Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "PreLink to a day schedule",
+              "displayName": "PreLink to a day schedule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Slack Log",
+              "displayName": "Slack Log",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified by Slack Channel",
+              "displayName": "Last Modified by Slack Channel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Urgency sorting",
+              "displayName": "Urgency sorting",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "hubstaff task status",
+              "displayName": "hubstaff task status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "created",
+                  "value": "created"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Trigger Hubstaff Task Creation",
+              "displayName": "Trigger Hubstaff Task Creation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Status",
+              "displayName": "Hubstaff Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project ID  count",
+              "displayName": "Project ID  count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "user ID  count",
+              "displayName": "user ID  count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Order",
+              "displayName": "Order",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Project Members",
+              "displayName": "Hubstaff Project Members",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "project and user id count hubstaff",
+              "displayName": "project and user id count hubstaff",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task ID count",
+              "displayName": "Task ID count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task hubstaff status",
+              "displayName": "Task hubstaff status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project hubstaff status",
+              "displayName": "Project hubstaff status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "User hubstaff status",
+              "displayName": "User hubstaff status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Task Download",
+              "displayName": "Hubstaff Task Download",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Count (User)",
+              "displayName": "Count (User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Today",
+              "displayName": "Today",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "hubstaff Task ID rollup",
+              "displayName": "hubstaff Task ID rollup",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Project ID from downloader",
+              "displayName": "Hubstaff Project ID from downloader",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "hubstaff Task ID from downloader",
+              "displayName": "hubstaff Task ID from downloader",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff automation status",
+              "displayName": "Hubstaff automation status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified_trigger",
+              "displayName": "Last Modified_trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Slack thread last checked",
+              "displayName": "Slack thread last checked",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Day planner Comment (from Day Task Planner)",
+              "displayName": "Day planner Comment (from Day Task Planner)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "order by lan",
+              "displayName": "order by lan",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3e3f6f5-386f-4759-bac2-116a4255e5f9",
+      "name": "Save Replies",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        340
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "uuOmy3y8vhS5tfLp",
+          "name": "RHgroup devb Personal Access Token account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "acfcb790-0e5e-4a19-a6fc-e7a48b8af9e1",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        520,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.iid ? true : false}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "326e64a7-1756-4ee1-9fb7-131fc401e93c",
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        980,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appLEhSvk48VvE4n7",
+          "mode": "list",
+          "cachedResultName": "Internal Project Plan",
+          "cachedResultUrl": "https://airtable.com/appLEhSvk48VvE4n7"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl6eC4gPGXW9C988",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://airtable.com/appLEhSvk48VvE4n7/tbl6eC4gPGXW9C988"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Loop Over Items').item.json.id }}",
+            "Slack thread last checked": "={{  $now }}",
+            "Last Slack Message in internal Thread": "No slack thread"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task Name",
+              "displayName": "Task Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reviewer",
+              "displayName": "Reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Attachment",
+              "displayName": "Attachment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Sync Task Info",
+              "displayName": "Sync Task Info",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task-number",
+              "displayName": "Task-number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "My Task Desktop Link",
+              "displayName": "My Task Desktop Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ADG Sync Ticket Number",
+              "displayName": "ADG Sync Ticket Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Autonumber",
+              "displayName": "Autonumber",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Parent Task",
+              "displayName": "Parent Task",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Start Date",
+              "displayName": "Start Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "LEGACY Est Hours Needed",
+              "displayName": "LEGACY Est Hours Needed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "End Date",
+              "displayName": "End Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "User",
+              "displayName": "User",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Is this a Interna Economy Project Task",
+              "displayName": "Is this a Interna Economy Project Task",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project Google Drive Folder",
+              "displayName": "Project Google Drive Folder",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Drive Folder Name",
+              "displayName": "Drive Folder Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Drive",
+              "displayName": "Drive",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Actual Hours Legacy",
+              "displayName": "Actual Hours Legacy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Assignee",
+              "displayName": "Assignee",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Blocked",
+                  "value": "Blocked"
+                },
+                {
+                  "name": "Backlog",
+                  "value": "Backlog"
+                },
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Requestor Review",
+                  "value": "Requestor Review"
+                },
+                {
+                  "name": "For Review",
+                  "value": "For Review"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                },
+                {
+                  "name": "Archive (not done)",
+                  "value": "Archive (not done)"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Assignee (from User)",
+              "displayName": "Assignee (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Assignee (from PM)",
+              "displayName": "Assignee (from PM)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project",
+              "displayName": "Project",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Task ID",
+              "displayName": "Hubstaff Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff User ID (from User)",
+              "displayName": "Hubstaff User ID (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Task Created Date",
+              "displayName": "Hubstaff Task Created Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Time Log",
+              "displayName": "Time Log",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Company (from Project)",
+              "displayName": "Company (from Project)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Est vs Actual Hours",
+              "displayName": "Est vs Actual Hours",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created By",
+              "displayName": "Created By",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "internal slack thread",
+              "displayName": "internal slack thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Predecessor",
+              "displayName": "Predecessor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Dev Sync Adgrabber Sync Tasks",
+              "displayName": "Dev Sync Adgrabber Sync Tasks",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Adg Description",
+              "displayName": "Adg Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ADG_attachment",
+              "displayName": "ADG_attachment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Solution or Answer from the Assigned User - used for review status",
+              "displayName": "Solution or Answer from the Assigned User - used for review status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Adg Task ID (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Adg Task ID (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task/Invoicing Status_Internal",
+              "displayName": "Task/Invoicing Status_Internal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Awaiting Client Approval ",
+                  "value": "Awaiting Client Approval "
+                },
+                {
+                  "name": "Client Approved - To start work on",
+                  "value": "Client Approved - To start work on"
+                },
+                {
+                  "name": "Client Approved - Work In Progress",
+                  "value": "Client Approved - Work In Progress"
+                },
+                {
+                  "name": "Client Approved - Work Done - Ready to be invoiced",
+                  "value": "Client Approved - Work Done - Ready to be invoiced"
+                },
+                {
+                  "name": "Client Approved - Work Done  - But wait with invoice",
+                  "value": "Client Approved - Work Done  - But wait with invoice"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Not paid",
+                  "value": "Client Approved - Work Done - Invoiced - Not paid"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Paid",
+                  "value": "Client Approved - Work Done - Invoiced - Paid"
+                },
+                {
+                  "name": "archive (not going to invoice)",
+                  "value": "archive (not going to invoice)"
+                },
+                {
+                  "name": "Work Done For Free",
+                  "value": "Work Done For Free"
+                },
+                {
+                  "name": "Client Approved - Work for QA",
+                  "value": "Client Approved - Work for QA"
+                },
+                {
+                  "name": "Client Approved - Ready for QA",
+                  "value": "Client Approved - Ready for QA"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Status (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Estimated Hours (or so far)",
+              "displayName": "Estimated Hours (or so far)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Scheduler Ticket Link (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Scheduler Ticket Link (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Week",
+              "displayName": "Week",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Paid/Unpaid",
+              "displayName": "Paid/Unpaid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Other  details to add in invoicing",
+              "displayName": "Other  details to add in invoicing",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Invoice URL (from Invoice) (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Invoice URL (from Invoice) (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoices New Synced From Budget",
+              "displayName": "Invoices New Synced From Budget",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "invoice pdf (from Invoices)",
+              "displayName": "invoice pdf (from Invoices)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoice_formatted",
+              "displayName": "Invoice_formatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Issue Date (from Invoices)",
+              "displayName": "Issue Date (from Invoices)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoicing Status (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Invoicing Status (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hours Invoiced",
+              "displayName": "Hours Invoiced",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "INVOICE STATUS",
+              "displayName": "INVOICE STATUS",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "part 2",
+              "displayName": "part 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "We Should Invoice?",
+              "displayName": "We Should Invoice?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Invoice category/section",
+              "displayName": "Invoice category/section",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "A. Small bugs that were fixed (not a functionality)",
+                  "value": "A. Small bugs that were fixed (not a functionality)"
+                },
+                {
+                  "name": "B. Tasks approved and robin sent by Robin",
+                  "value": "B. Tasks approved and robin sent by Robin"
+                },
+                {
+                  "name": "C.. Tasks we didnt get approval on but we did",
+                  "value": "C.. Tasks we didnt get approval on but we did"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Why should we invoice it? ",
+              "displayName": "Why should we invoice it? ",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ADG slack thread link (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "ADG slack thread link (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ADG Slack Thread",
+              "displayName": "ADG Slack Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task name (from Dev Sync Adgrabber Sync Tasks)",
+              "displayName": "Task name (from Dev Sync Adgrabber Sync Tasks)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Meeting 23 November Comment",
+              "displayName": "Meeting 23 November Comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Suggest Invoice",
+              "displayName": "Suggest Invoice",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Internal_Which Slack Channel",
+              "displayName": "Internal_Which Slack Channel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "rfm-request",
+                  "value": "rfm-request"
+                },
+                {
+                  "name": "adg-portal-internal",
+                  "value": "adg-portal-internal"
+                },
+                {
+                  "name": "rfm-Internal-delivery",
+                  "value": "rfm-Internal-delivery"
+                },
+                {
+                  "name": "design",
+                  "value": "design"
+                },
+                {
+                  "name": "ext-lan",
+                  "value": "ext-lan"
+                },
+                {
+                  "name": "onboarding-jelmar",
+                  "value": "onboarding-jelmar"
+                },
+                {
+                  "name": "homestyle-devb",
+                  "value": "homestyle-devb"
+                },
+                {
+                  "name": "buxfergeneralecon",
+                  "value": "buxfergeneralecon"
+                },
+                {
+                  "name": "merid",
+                  "value": "merid"
+                },
+                {
+                  "name": "SEO",
+                  "value": "SEO"
+                },
+                {
+                  "name": "appointment leads",
+                  "value": "appointment leads"
+                },
+                {
+                  "name": "digitialization",
+                  "value": "digitialization"
+                },
+                {
+                  "name": "topvirtual",
+                  "value": "topvirtual"
+                },
+                {
+                  "name": "integrationsoffert",
+                  "value": "integrationsoffert"
+                },
+                {
+                  "name": "Martin - DM",
+                  "value": "Martin - DM"
+                },
+                {
+                  "name": "leadsplan-salesfunctionality",
+                  "value": "leadsplan-salesfunctionality"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "NOW",
+              "displayName": "NOW",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Internal Slack thread sent date and time",
+              "displayName": "Internal Slack thread sent date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Proj",
+              "displayName": "Proj",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task (from Reformatizer Task List External)",
+              "displayName": "Task (from Reformatizer Task List External)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Reformatizer Task List Internal",
+              "displayName": "Reformatizer Task List Internal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "RFM Internal details (from Reformatizer Task List Internal)",
+              "displayName": "RFM Internal details (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Link to other source base",
+              "displayName": "Link to other source base",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Trigger_Update User",
+              "displayName": "Trigger_Update User",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Update",
+                  "value": "Update"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "User_Scheduler",
+              "displayName": "User_Scheduler",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Users_Internal",
+              "displayName": "Users_Internal",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "External Slack thread sent date and time",
+              "displayName": "External Slack thread sent date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "RFM ID",
+              "displayName": "RFM ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "TASK ID",
+              "displayName": "TASK ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status (from Reformatizer Task List Internal)",
+              "displayName": "Status (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status from the source base",
+              "displayName": "Status from the source base",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status remarks",
+              "displayName": "Status remarks",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interface (from Project) (from Reformatizer Task List Internal)",
+              "displayName": "Interface (from Project) (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Interfaces",
+              "displayName": "Interfaces",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "External_Customerfacing_Which Slack Channel",
+              "displayName": "External_Customerfacing_Which Slack Channel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Users tagged from other base",
+              "displayName": "Users tagged from other base",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task Text",
+              "displayName": "Task Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "RFMINT_attachment",
+              "displayName": "RFMINT_attachment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Mark Comments",
+              "displayName": "Mark Comments",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Task details - Marks Interface",
+              "displayName": "Task details - Marks Interface",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "trigger",
+              "displayName": "trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sync back",
+                  "value": "Sync back"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Start Date How Long Ago Weeks",
+              "displayName": "Start Date How Long Ago Weeks",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hours Budgetted / Est Hours Needed",
+              "displayName": "Hours Budgetted / Est Hours Needed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Durations Days",
+              "displayName": "Durations Days",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Project ID",
+              "displayName": "Hubstaff Project ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "RecordID",
+              "displayName": "RecordID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project's recordID",
+              "displayName": "Project's recordID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Lan's comment",
+              "displayName": "Lan's comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reviewer_assignee",
+              "displayName": "Reviewer_assignee",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified 2",
+              "displayName": "Last Modified 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Get Slack Link",
+              "displayName": "Get Slack Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "My Role",
+              "displayName": "My Role",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Count (Tasks) (from Reformatizer Task List Internal)",
+              "displayName": "Count (Tasks) (from Reformatizer Task List Internal)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Slack Member ID (from User)",
+              "displayName": "Slack Member ID (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Invoicing Status",
+              "displayName": "Invoicing Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Awaiting Client Approval ",
+                  "value": "Awaiting Client Approval "
+                },
+                {
+                  "name": "Work Done For Free",
+                  "value": "Work Done For Free"
+                },
+                {
+                  "name": "Client Approved - To start work on",
+                  "value": "Client Approved - To start work on"
+                },
+                {
+                  "name": "Client Approved - Work In Progress",
+                  "value": "Client Approved - Work In Progress"
+                },
+                {
+                  "name": "Client Approved - Work Done - Ready to be invoiced",
+                  "value": "Client Approved - Work Done - Ready to be invoiced"
+                },
+                {
+                  "name": "Client Approved - Ready for QA",
+                  "value": "Client Approved - Ready for QA"
+                },
+                {
+                  "name": "Client Approved - Work Done  - But wait with invoice",
+                  "value": "Client Approved - Work Done  - But wait with invoice"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Not paid",
+                  "value": "Client Approved - Work Done - Invoiced - Not paid"
+                },
+                {
+                  "name": "Client Approved - Work Done - Invoiced - Paid",
+                  "value": "Client Approved - Work Done - Invoiced - Paid"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Type (from Project)",
+              "displayName": "Type (from Project)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "slack thread message ID",
+              "displayName": "slack thread message ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "slack channel ID",
+              "displayName": "slack channel ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "slack channel ID_formatted",
+              "displayName": "slack channel ID_formatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "slack thread message ID_formatted",
+              "displayName": "slack thread message ID_formatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Internal Slack Channel Link (For Project)",
+              "displayName": "Internal Slack Channel Link (For Project)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "REVIEWER Member ID",
+              "displayName": "REVIEWER Member ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Economy Team Task Link",
+              "displayName": "Economy Team Task Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Working Hours (from User)",
+              "displayName": "Working Hours (from User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Working Hours Week",
+              "displayName": "Working Hours Week",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Aaron's detail's view",
+              "displayName": "Aaron's detail's view",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "task text with ID & proj name",
+              "displayName": "task text with ID & proj name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status based on dates",
+              "displayName": "Status based on dates",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "ED DIFF FROM TODAY",
+              "displayName": "ED DIFF FROM TODAY",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "SD DIFF FROM TODAY",
+              "displayName": "SD DIFF FROM TODAY",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Email of Who has access to the project Type",
+              "displayName": "Email of Who has access to the project Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status based on dates lev1",
+              "displayName": "Status based on dates lev1",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "INT ID",
+              "displayName": "INT ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "INT AUTOID",
+              "displayName": "INT AUTOID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Status last modified date and time",
+              "displayName": "Status last modified date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last status integromat sent",
+              "displayName": "Last status integromat sent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Team",
+              "displayName": "Team",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Full Ticket Details",
+              "displayName": "Full Ticket Details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "User/Reviewer",
+              "displayName": "User/Reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "My Task Mobile Link",
+              "displayName": "My Task Mobile Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "reviewer assigned",
+              "displayName": "reviewer assigned",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Day Schedule",
+              "displayName": "Day Schedule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Order Day Schedule",
+              "displayName": "Order Day Schedule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Day Schedule Comment",
+              "displayName": "Day Schedule Comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Order Day Schedule Name Comment",
+              "displayName": "Order Day Schedule Name Comment",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Day Task Planner",
+              "displayName": "Day Task Planner",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Done / Test Notes - used for Done status",
+              "displayName": "Done / Test Notes - used for Done status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status modified date and time",
+              "displayName": "Status modified date and time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Get Last Message From Thread",
+              "displayName": "Get Last Message From Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Slack Message in internal Thread",
+              "displayName": "Last Slack Message in internal Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Get Last Messages Number",
+              "displayName": "Get Last Messages Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Day Schedule Date",
+              "displayName": "Day Schedule Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Channel ID For Slack Thread",
+              "displayName": "Channel ID For Slack Thread",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "PreLink to a day schedule",
+              "displayName": "PreLink to a day schedule",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Slack Log",
+              "displayName": "Slack Log",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified by Slack Channel",
+              "displayName": "Last Modified by Slack Channel",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Urgency sorting",
+              "displayName": "Urgency sorting",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "hubstaff task status",
+              "displayName": "hubstaff task status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "created",
+                  "value": "created"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Trigger Hubstaff Task Creation",
+              "displayName": "Trigger Hubstaff Task Creation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Status",
+              "displayName": "Hubstaff Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project ID  count",
+              "displayName": "Project ID  count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "user ID  count",
+              "displayName": "user ID  count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Order",
+              "displayName": "Order",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Project Members",
+              "displayName": "Hubstaff Project Members",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "project and user id count hubstaff",
+              "displayName": "project and user id count hubstaff",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task ID count",
+              "displayName": "Task ID count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Task hubstaff status",
+              "displayName": "Task hubstaff status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Project hubstaff status",
+              "displayName": "Project hubstaff status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "User hubstaff status",
+              "displayName": "User hubstaff status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Task Download",
+              "displayName": "Hubstaff Task Download",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Count (User)",
+              "displayName": "Count (User)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Today",
+              "displayName": "Today",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "hubstaff Task ID rollup",
+              "displayName": "hubstaff Task ID rollup",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff Project ID from downloader",
+              "displayName": "Hubstaff Project ID from downloader",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "hubstaff Task ID from downloader",
+              "displayName": "hubstaff Task ID from downloader",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Hubstaff automation status",
+              "displayName": "Hubstaff automation status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Modified_trigger",
+              "displayName": "Last Modified_trigger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Slack thread last checked",
+              "displayName": "Slack thread last checked",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Day planner Comment (from Day Task Planner)",
+              "displayName": "Day planner Comment (from Day Task Planner)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "order by lan",
+              "displayName": "order by lan",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7b56e5a8-3b6c-45b9-97d3-f0a94fcd7488",
+      "name": "Save Replies1",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        520
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "uuOmy3y8vhS5tfLp",
+          "name": "RHgroup devb Personal Access Token account "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "user",
+        "operation": "getAll",
+        "returnAll": true
+      },
+      "id": "c5824dfa-196b-42da-9742-5a456b4ded6d",
+      "name": "Get Users",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        360
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "r2RBZ1ZiDmaDr3Fk",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Task Details": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Channel Message": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get List of Replies": {
+      "main": [
+        [
+          {
+            "node": "Replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replies": {
+      "main": [
+        [
+          {
+            "node": "Save Replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Channel Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Replies": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Get List of Replies",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Replies1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Replies1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Users": {
+      "main": [
+        [
+          {
+            "node": "Get Task Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eb4425e8-f1b7-45b3-a36f-6b8b88fa29b9",
+  "id": "xsuIL8wNdrT65rXy",
+  "meta": {
+    "instanceId": "86072278c70ff09f1c01dd0d8440d12603051524ab675fc54c6bda20c78db9b6"
+  },
+  "tags": []
+}
